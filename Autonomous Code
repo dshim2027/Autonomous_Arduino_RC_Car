@@ -1,0 +1,124 @@
+#include <Servo.h>
+Servo EduServo;
+
+int trigPin = 13;         
+int echoPin = 12;                 
+int Ultra_d = 0;
+
+int val = 0;             
+   
+int RightMotor_E_pin = 5;       
+int LeftMotor_E_pin = 6;     
+int RightMotor_1_pin = 8;     
+int RightMotor_2_pin = 9;     
+int LeftMotor_3_pin = 10;    
+int LeftMotor_4_pin = 11;     
+
+int L_MotorSpeed = 153; 
+int R_MotorSpeed = 153; 
+
+void setup() {  
+  EduServo.attach(2);                   
+  
+  pinMode(echoPin, INPUT);                  
+  pinMode(trigPin, OUTPUT);           
+  
+  pinMode(RightMotor_E_pin, OUTPUT);       
+  pinMode(RightMotor_1_pin, OUTPUT);
+  pinMode(RightMotor_2_pin, OUTPUT);
+  pinMode(LeftMotor_3_pin, OUTPUT);
+  pinMode(LeftMotor_4_pin, OUTPUT);
+  pinMode(LeftMotor_E_pin, OUTPUT);
+
+  Serial.begin(9600);                       
+  Serial.println("Welcome Eduino!");
+}
+
+void loop() { 
+  Ultra_d = Ultrasonic();
+  Serial.println(Ultra_d);
+  motor_role(HIGH, HIGH);  
+
+  if(Ultra_d < 250) {
+    if (Ultra_d < 150) {
+      Serial.println("Under 150mm.");
+      motor_role(LOW, LOW); // Reverse
+      delay(1000);
+      analogWrite(RightMotor_E_pin, 0);  
+      analogWrite(LeftMotor_E_pin, 0);
+      delay(200);
+    }
+    else {
+      analogWrite(RightMotor_E_pin, 0);  
+      analogWrite(LeftMotor_E_pin, 0);
+      delay(200);
+      Serial.println("Over 150mm");
+      val =  Servo_con();
+      if (val == 0) {
+        Serial.println("Right");
+        analogWrite(RightMotor_E_pin, 0);  
+        analogWrite(LeftMotor_E_pin, 0);
+        delay(500);
+        motor_role(LOW, LOW);  
+        delay(500);
+        motor_role(LOW, HIGH); 
+        delay(800);
+      }
+      else if (val == 1) {
+        Serial.println("Left");
+        analogWrite(RightMotor_E_pin, 0);  
+        analogWrite(LeftMotor_E_pin, 0);
+        delay(500);
+        motor_role(LOW, LOW); 
+        delay(500);
+        motor_role(HIGH, LOW);
+        delay(800);
+      }
+    }
+  }
+}
+
+void motor_role(int R_motor, int L_motor){
+   digitalWrite(RightMotor_1_pin, R_motor);
+   digitalWrite(RightMotor_2_pin, !R_motor);
+   digitalWrite(LeftMotor_3_pin, L_motor);
+   digitalWrite(LeftMotor_4_pin, !L_motor);
+   
+   analogWrite(RightMotor_E_pin, R_MotorSpeed);  
+   analogWrite(LeftMotor_E_pin, L_MotorSpeed);
+}
+
+int Ultrasonic(){
+  long duration, distance;
+  digitalWrite(trigPin, HIGH);         
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);   
+  distance = ((float)(340 * duration) / 1000) / 2; 
+
+  //Serial.print("DIstance:");             
+  //Serial.println(distance);
+
+  return distance;
+}
+
+int Servo_con(){
+  EduServo.write(20);
+  delay(300);
+  int Ult_20 = Ultrasonic();
+  delay(700);
+  EduServo.write(160);
+  delay(300);
+  int Ult_160 = Ultrasonic();
+  delay(700);
+
+  if(Ult_20 > Ult_160){
+     val = 1;
+  }
+  else{
+     val = 0;
+  }
+  EduServo.write(90);
+  
+  return val;
+}
